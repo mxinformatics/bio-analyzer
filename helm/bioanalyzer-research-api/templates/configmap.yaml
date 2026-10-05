@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "bioanalyzer-research-api.configmapName" . }}
+  labels:
+    {{- include "bioanalyzer-research-api.labels" . | nindent 4 }}
+  {{- with (include "bioanalyzer-research-api.annotations" .) }}
+  annotations:
+    {{- . | nindent 4 }}
+  {{- end }}
+data:
+  {{- range $key, $value := .Values.config.data }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}

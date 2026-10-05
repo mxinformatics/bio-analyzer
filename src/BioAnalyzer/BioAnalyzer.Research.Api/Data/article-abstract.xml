@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd
+http://www.openarchives.org/OAI/2.0/ ">
+    <responseDate>2025-06-28T15:26:33Z</responseDate>
+    <request verb="GetRecord" identifier="oai:pubmedcentral.nih.gov:12196004" metadataPrefix="oai_dc">
+        https:/www.ncbi.nlm.nih.gov/pmc/oai/oai.cgi
+    </request>
+    <GetRecord>
+        <record>
+            <header>
+                <identifier>oai:pubmedcentral.nih.gov:12196004</identifier>
+                <datestamp>2025-06-26</datestamp>
+                <setSpec>pathogens</setSpec>
+                <setSpec>pmc-open</setSpec>
+            </header>
+            <metadata>
+                <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
+                           xmlns:dc="http://purl.org/dc/elements/1.1/"
+                           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                           xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+                    <dc:title>The Effects of High-Dose Probiotic Supplementation on Immune Activation and Neurocognitive
+                        Disorders in People Living with HIV Undergoing Successful Antiretroviral Treatment: The Procog
+                        Study
+                    </dc:title>
+                    <dc:creator>Vassallo, Matteo</dc:creator>
+                    <dc:creator>Zerlini, Margaux</dc:creator>
+                    <dc:creator>Fabre, Roxane</dc:creator>
+                    <dc:creator>Joly, Heloise</dc:creator>
+                    <dc:creator>Durant, Jacques</dc:creator>
+                    <dc:creator>Makinson, Alain</dc:creator>
+                    <dc:creator>Mauries, Amandine</dc:creator>
+                    <dc:creator>Capeau, Jacqueline</dc:creator>
+                    <dc:creator>Fellahi, Soraya</dc:creator>
+                    <dc:creator>Bastard, Jean-Philippe</dc:creator>
+                    <dc:creator>Pradier, Christian</dc:creator>
+                    <dc:creator>Lebrun-Frenay, Christine</dc:creator>
+                    <dc:source>Pathogens</dc:source>
+                    <dc:subject>Article</dc:subject>
+                    <dc:description>Background: The prevalence of HIV-associated neurocognitive disorders (HAND) remains
+                        high despite antiretroviral treatment (ART). Changes in gut microbiota and persistent immune
+                        activation have been suggested as possible causes, while the role of probiotic supplementation
+                        remains controversial. Methods: We included subjects with mild HAND and successful ART. They
+                        were randomized to receive either 6 months of high-dose probiotic supplementation or to continue
+                        with only ART. Immune activation markers and neuropsychological testing were performed at
+                        baseline and the end of follow-up. Neuropsychological testing assessed learning, episodic
+                        memory, attention/concentration, executive functions, language, information processing speed,
+                        and motor skills. Z- and T-scores were calculated for all domains but motor skills, allowing the
+                        measurement of the global deficit score (GDS). The trajectories of neuropsychological
+                        performances and immune activation markers were compared between groups. Results: From September
+                        2020 to July 2021, 31 PWHs were included (median age 62, 73% men, CD4 744 cc/mm(3)), and 28
+                        completed the 6-month follow-up. The characteristics of the subjects and their
+                        neuropsychological performance at baseline in the two groups were similar. At the end of
+                        follow-up, probiotics did not have any impact on immune activation markers, while they were
+                        associated with better improvement in GDS (T-score 0.0 in controls vs. −0.3 in probiotics, p =
+                        0.048) and the attention/concentration test (Z-score 0.4 in controls vs. 1.2 in probiotics, p =
+                        0.035). Conclusions: Oral supplementation with high-dose probiotics for 6 months did not affect
+                        systemic immune activation but was associated with improved neurocognitive performance,
+                        suggesting benefits from probiotic supplementation for mild HAND.
+                    </dc:description>
+                    <dc:publisher>MDPI</dc:publisher>
+                    <dc:date>2025-06-06</dc:date>
+                    <dc:identifier>/pmc/articles/PMC12196004/</dc:identifier>
+                    <dc:identifier>/pubmed/40559576</dc:identifier>
+                    <dc:identifier>http://dx.doi.org/10.3390/pathogens14060568</dc:identifier>
+                    <dc:type>Text</dc:type>
+                    <dc:language>en</dc:language>
+                    <dc:rights>© 2025 by the authors.</dc:rights>
+                    <dc:rights>https://creativecommons.org/licenses/by/4.0/Licensee MDPI, Basel, Switzerland. This
+                        article is an open access article distributed under the terms and conditions of the Creative
+                        Commons Attribution (CC BY) license (https://creativecommons.org/licenses/by/4.0/).
+                    </dc:rights>
+                </oai_dc:dc>
+            </metadata>
+        </record>
+    </GetRecord>
+</OAI-PMH>

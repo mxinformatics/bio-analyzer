@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: cluster-infrastructure
+  namespace: argocd
+spec:
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  description: Cluster Infrastructure
+  destinations:
+  - name: 'cert-manager'
+    namespace: 'cert-manager'
+    server: https://kubernetes.default.svc
+  - name: 'verida-ingress'
+    namespace: 'verida-ingress'
+    server: https://kubernetes.default.svc
+  - name: 'argo-project'
+    namespace: 'argo'
+    server: https://kubernetes.default.svc
+  - name: argocd
+    namespace: argocd
+    server: https://kubernetes.default.svc
+  - name: 'default'
+    namespace: 'default'
+    server: https://kubernetes.default.svc
+  - name: 'data-stores'
+    namespace: 'data-stores'
+    server: https://kubernetes.default.svc
+  - name: 'data-stores-dev'
+    namespace: 'data-stores-dev'
+    server: https://kubernetes.default.svc
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  sourceRepos:
+  - https://charts.jetstack.io
+  - https://argoproj.github.io/argo-helm
+status: {}

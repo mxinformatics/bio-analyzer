@@ -1,0 +1,37 @@
+# In the argo-events namespace
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argo-events-sa
+---
+# Cluster role to allow workflow creation in other namespaces
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argo-events-workflow-role
+rules:
+  - apiGroups:
+    - argoproj.io
+    resources:
+    - workflows
+    verbs:
+    - create
+    - get
+    - list
+    - watch
+    - update
+    - patch
+---
+# Bind the cluster role to the service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: argo-events-workflow-binding
+subjects:
+- kind: ServiceAccount
+  name: argo-events-sa
+  namespace: argo
+roleRef:
+  kind: ClusterRole
+  name: argo-events-workflow-role
+  apiGroup: rbac.authorization.k8s.io

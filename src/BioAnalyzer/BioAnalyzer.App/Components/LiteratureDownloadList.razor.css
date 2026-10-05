@@ -1,0 +1,17 @@
+.download-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.literature-download {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.1rem 1.25rem;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.empty-state {
+    margin: 0;
+    color: #4b5563;
+}

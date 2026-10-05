@@ -1,0 +1,20 @@
+apiVersion: v2
+name: bioanalyzer-research-api
+description: A Helm chart for BioAnalyzer Research API - A .NET 9.0 Web API for biological data analysis and research
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+home: https://github.com/mxinformatics/BioAnalyzer
+sources:
+  - https://github.com/mxinformatics/BioAnalyzer
+maintainers:
+  - name: MX Informatics Team
+    url: https://github.com/mxinformatics
+keywords:
+  - bioanalyzer
+  - research
+  - api
+  - dotnet
+  - azure
+annotations:
+  category: Application

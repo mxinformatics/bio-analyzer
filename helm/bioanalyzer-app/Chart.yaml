@@ -1,0 +1,16 @@
+apiVersion: v2
+name: bioanalyzer-app
+description: A Helm chart for deploying BioAnalyzer.App to Kubernetes
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - bioanalyzer
+  - blazor
+  - aspnet-core
+  - biology
+maintainers:
+  - name: dmaxim
+    email: dmaxim@example.com
+sources:
+  - https://github.com/mxinformatics/BioAnalyzer

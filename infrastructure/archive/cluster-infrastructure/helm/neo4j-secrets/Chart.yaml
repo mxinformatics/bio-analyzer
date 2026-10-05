@@ -1,0 +1,17 @@
+apiVersion: v2
+name: neo4j-external-secrets
+description: A Helm chart for deploying SecretStore and ExternalSecret for Azure Key Vault integration
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - external-secrets
+  - azure-keyvault
+  - secrets
+  - security
+home: https://setrans@dev.azure.com/setrans/Azure-Infrastructure/_git/Azure-Infrastructure
+sources:
+  - https://setrans@dev.azure.com/setrans/Azure-Infrastructure/_git/Azure-Infrastructure
+maintainers:
+  - name: Verida Team
+    email: support@verida.io

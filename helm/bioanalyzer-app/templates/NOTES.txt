@@ -1,0 +1,63 @@
+1. Get the application URL by running these commands:
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "bioanalyzer-app.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "bioanalyzer-app.fullname" . }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "bioanalyzer-app.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.service.port }}
+{{- else if contains "ClusterIP" .Values.service.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "{{ include "bioanalyzer-app.selectorLabels" . }}" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
+{{- end }}
+
+2. Configuration Information:
+   - ASP.NET Core Environment: {{ .Values.config.aspnetcoreEnvironment }}
+   - Service Bus Namespace: {{ .Values.config.appSettings.Events.ServiceBusNamespace }}
+   - Literature Download Topic: {{ .Values.config.appSettings.Events.LiteratureDownloadTopic }}
+
+3. Security Configuration:
+   - Running as non-root user (UID: {{ .Values.securityContext.runAsUser }})
+   - Read-only root filesystem: {{ .Values.securityContext.readOnlyRootFilesystem }}
+
+{{- if .Values.azureServiceBus.useManagedIdentity }}
+4. Azure Service Bus Authentication:
+   - Using Azure Managed Identity for authentication
+   - Ensure your cluster has workload identity configured
+{{- else if .Values.azureServiceBus.connectionStringSecretName }}
+4. Azure Service Bus Authentication:
+   - Using connection string from secret: {{ .Values.azureServiceBus.connectionStringSecretName }}
+   - Make sure the secret exists in the {{ .Release.Namespace }} namespace
+{{- else }}
+4. Azure Service Bus Authentication:
+   - No Azure Service Bus authentication configured
+   - Configure either managed identity or connection string secret
+{{- end }}
+
+5. Monitoring and Health Checks:
+   - Liveness probe: HTTP GET {{ .Values.livenessProbe.httpGet.path }}:{{ .Values.livenessProbe.httpGet.port }}
+   - Readiness probe: HTTP GET {{ .Values.readinessProbe.httpGet.path }}:{{ .Values.readinessProbe.httpGet.port }}
+
+{{- if .Values.autoscaling.enabled }}
+6. Autoscaling Configuration:
+   - Min replicas: {{ .Values.autoscaling.minReplicas }}
+   - Max replicas: {{ .Values.autoscaling.maxReplicas }}
+   - Target CPU utilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}%
+{{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+   - Target Memory utilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}%
+{{- end }}
+{{- end }}
+
+For more information and troubleshooting, please check:
+- Pod logs: kubectl logs -f deployment/{{ include "bioanalyzer-app.fullname" . }} -n {{ .Release.Namespace }}
+- Pod status: kubectl get pods -l {{ include "bioanalyzer-app.selectorLabels" . }} -n {{ .Release.Namespace }}

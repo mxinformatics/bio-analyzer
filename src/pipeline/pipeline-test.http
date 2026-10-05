@@ -1,0 +1,87 @@
+# Pipeline API test requests (VS Code REST Client)
+# Each API section below can be run independently.
+
+@chunkApi = http://localhost:8001
+@embedApi = http://localhost:8002
+@graphApi = http://localhost:8080
+
+# Uncomment if REQUIRE_API_KEY=true for a service.
+# @chunkApiKey = replace-me
+# @embeddingApiKey = replace-me
+# @graphApiKey = replace-me
+
+# Shared metadata defaults
+@documentName = test-document-one
+@sourceSystemDocId = test-001
+@docType = primary-research
+
+############################################
+# chunk-api (independent)
+############################################
+@chunkDocumentId = test-001
+
+### chunk-api health
+GET {{chunkApi}}/health
+
+### @name chunkDocument
+POST {{chunkApi}}/chunk
+Content-Type: application/json
+# X-API-Key: {{chunkApiKey}}
+
+{
+  "document_name": "{{documentName}}",
+  "file_name": "12794424.pdf",
+  "document_id": "{{chunkDocumentId}}",
+  "metadata": {
+    "source_system_doc_id": "{{sourceSystemDocId}}",
+    "doc_type": "{{docType}}",
+    "original_file_name": "sample.pdf"
+  }
+}
+
+############################################
+# embedding-api (independent)
+############################################
+# Use a document ID that already has chunk artifacts in storage.
+@embedDocumentId = test-001
+
+### embedding-api health
+GET {{embedApi}}/health
+
+### @name embedDocument
+POST {{embedApi}}/embed
+Content-Type: application/json
+# X-API-Key: {{embeddingApiKey}}
+
+{
+  "document_id": "{{embedDocumentId}}"
+}
+
+############################################
+# graph-data-api (independent)
+############################################
+# Use a document ID that already has embedded chunks in storage.
+@graphDocumentId = test-001
+
+### graph-data-api health
+GET {{graphApi}}/health
+
+### @name buildGraph
+POST {{graphApi}}/build-graph
+Content-Type: application/json
+# X-API-Key: {{graphApiKey}}
+
+{
+  "document_id": "{{graphDocumentId}}"
+}
+
+### @name queryGraph
+POST {{graphApi}}/query
+Content-Type: application/json
+# X-API-Key: {{graphApiKey}}
+
+{
+  "query": "Summarize key findings for this document",
+  "top_k": 5,
+  "document_type": "{{docType}}"
+}

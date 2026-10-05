@@ -1,0 +1,55 @@
+1. Get the application URL by running these commands:
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "bioanalyzer-research-api.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "bioanalyzer-research-api.fullname" . }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "bioanalyzer-research-api.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.service.port }}
+{{- else if contains "ClusterIP" .Values.service.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "bioanalyzer-research-api.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
+{{- end }}
+
+2. Check the health of your BioAnalyzer Research API:
+   - Health endpoint: GET /health
+   - Ready endpoint: GET /health/ready
+
+3. Configuration:
+   - The API is configured to run in {{ .Values.env.ASPNETCORE_ENVIRONMENT }} mode
+   {{- if .Values.secrets.azure.create }}
+   - Azure services are configured via secrets
+   {{- else if .Values.secrets.azure.existingSecret }}
+   - Azure services are configured via existing secret: {{ .Values.secrets.azure.existingSecret }}
+   {{- else }}
+   - Azure services configuration needs to be provided
+   {{- end }}
+
+4. Scaling:
+   {{- if .Values.autoscaling.enabled }}
+   - Auto-scaling is enabled (min: {{ .Values.autoscaling.minReplicas }}, max: {{ .Values.autoscaling.maxReplicas }})
+   {{- else }}
+   - Currently running {{ .Values.replicaCount }} replica(s)
+   - To enable auto-scaling, set autoscaling.enabled=true
+   {{- end }}
+
+5. Monitoring:
+   {{- if contains "bioanalyzer-research-api" .Values.env.OTEL_SERVICE_NAME }}
+   - OpenTelemetry is configured for observability
+   {{- if .Values.env.OTEL_EXPORTER_OTLP_ENDPOINT }}
+   - Telemetry endpoint: {{ .Values.env.OTEL_EXPORTER_OTLP_ENDPOINT }}
+   {{- end }}
+   {{- end }}
+
+For more information about BioAnalyzer Research API, visit:
+https://github.com/mxinformatics/BioAnalyzer

@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-events-prod-roles
+  namespace: argocd
+spec:
+  destination:
+    namespace: argo
+    server: https://kubernetes.default.svc
+  project: cluster-infrastructure
+  source:
+    path: cluster-infrastructure/verida-prod/argo-events/resources
+    repoURL: git@ssh.dev.azure.com:v3/setrans/Azure-Infrastructure/Azure-Infrastructure
+    targetRevision: HEAD
+  syncPolicy:
+    automated: {}

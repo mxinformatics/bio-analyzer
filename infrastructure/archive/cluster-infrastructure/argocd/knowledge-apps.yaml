@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dev-data-stores
+  namespace: argocd
+spec:
+  destination:
+    namespace: data-stores-dev
+    server: https://kubernetes.default.svc
+  project: cluster-infrastructure
+  source:
+    path: cluster-infrastructure/dev-test/argocd/applications
+    repoURL: git@ssh.dev.azure.com:v3/setrans/Azure-Infrastructure/Azure-Infrastructure
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      enabled: true

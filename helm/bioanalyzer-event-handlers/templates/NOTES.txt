@@ -1,0 +1,105 @@
+🎉 BioAnalyzer EventHandlers has been deployed successfully!
+
+This is a background service that processes Azure Service Bus messages for document downloading and processing.
+
+{{- if .Values.service.enabled }}
+1. Service Information:
+   - Service Name: {{ include "bioanalyzer-event-handlers.fullname" . }}
+   - Service Type: {{ .Values.service.type }}
+   - Service Port: {{ .Values.service.port }}
+   
+   {{- if eq .Values.service.type "ClusterIP" }}
+   The service is only accessible from within the cluster.
+   {{- else if eq .Values.service.type "NodePort" }}
+   You can access the service using the node IP and port.
+   {{- else if eq .Values.service.type "LoadBalancer" }}
+   A load balancer will be provisioned to expose the service externally.
+   {{- end }}
+{{- else }}
+1. Service Information:
+   - No external service is configured (background service only)
+{{- end }}
+
+2. Application Configuration:
+   - Azure Functions Runtime: {{ .Values.azureFunctions.runtime.workerRuntime }}
+   - Function Timeout: {{ .Values.azureFunctions.host.functionTimeout }} minutes
+
+
+3. Service Bus Configuration:
+
+4. Authentication:
+
+5. Monitoring:
+   {{- if .Values.applicationInsights.enabled }}
+   - Application Insights: ✅ Enabled
+     {{- if .Values.applicationInsights.connectionStringSecretName }}
+     - Using connection string from: {{ .Values.applicationInsights.connectionStringSecretName }}
+     {{- else if .Values.applicationInsights.instrumentationKeySecretName }}
+     - Using instrumentation key from: {{ .Values.applicationInsights.instrumentationKeySecretName }}
+     {{- end }}
+   {{- else }}
+   - Application Insights: ❌ Disabled
+   {{- end }}
+
+   {{- if .Values.monitoring.prometheus.enabled }}
+   - Prometheus Metrics: ✅ Enabled on port {{ .Values.monitoring.prometheus.port }}{{ .Values.monitoring.prometheus.path }}
+   {{- else }}
+   - Prometheus Metrics: ❌ Disabled
+   {{- end }}
+
+6. Resource Allocation:
+   - CPU Request: {{ .Values.resources.requests.cpu }}
+   - Memory Request: {{ .Values.resources.requests.memory }}
+   - CPU Limit: {{ .Values.resources.limits.cpu }}
+   - Memory Limit: {{ .Values.resources.limits.memory }}
+
+{{- if .Values.autoscaling.enabled }}
+7. Auto-scaling Configuration:
+   - Min Replicas: {{ .Values.autoscaling.minReplicas }}
+   - Max Replicas: {{ .Values.autoscaling.maxReplicas }}
+   - Target CPU: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}%
+   {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+   - Target Memory: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}%
+   {{- end }}
+{{- else }}
+7. Auto-scaling Configuration:
+   - Auto-scaling: ❌ Disabled ({{ .Values.replicaCount }} replica{{- if gt (.Values.replicaCount | int) 1 }}s{{- end }})
+{{- end }}
+
+8. Useful Commands:
+
+   Check deployment status:
+   kubectl get deployment {{ include "bioanalyzer-event-handlers.fullname" . }} -n {{ .Release.Namespace }}
+
+   View pods:
+   kubectl get pods -l {{ include "bioanalyzer-event-handlers.selectorLabels" . }} -n {{ .Release.Namespace }}
+
+   View logs:
+   kubectl logs -f deployment/{{ include "bioanalyzer-event-handlers.fullname" . }} -n {{ .Release.Namespace }}
+
+   Monitor pod resource usage:
+   kubectl top pods -l {{ include "bioanalyzer-event-handlers.selectorLabels" . }} -n {{ .Release.Namespace }}
+
+   {{- if .Values.autoscaling.enabled }}
+   Check auto-scaling status:
+   kubectl get hpa {{ include "bioanalyzer-event-handlers.fullname" . }} -n {{ .Release.Namespace }}
+   {{- end }}
+
+9. Troubleshooting:
+
+   If pods are not starting:
+   - Check if all required secrets exist in the {{ .Release.Namespace }} namespace
+   - Verify Azure authentication is properly configured
+   - Check resource limits and node capacity
+
+   If no messages are being processed:
+   - Verify Service Bus connection and queue/topic names
+   - Check Application Insights for any function execution errors
+   - Ensure proper RBAC permissions if using Managed Identity
+
+   Common issues:
+   - ImagePullBackOff: Verify Docker image exists and is accessible
+   - CrashLoopBackOff: Check application logs for startup errors
+   - Authentication failures: Verify Azure credentials and permissions
+
+📚 For more information, see the chart README.md file.

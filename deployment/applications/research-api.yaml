@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: research-api
+  namespace: argocd
+  annotations:
+    # argocd-image-updater.argoproj.io/git-branch: HEAD
+    # argocd-image-updater.argoproj.io/image-list: apiimage=mxinfo.azurecr.io/kb.search.ui
+    # argocd-image-updater.argoproj.io/apiimage.ignore-tags: latest, dev
+    # argocd-image-updater.argoproj.io/apiimage.update-strategy: newest-build
+    # argocd-image-updater.argoproj.io/apiimage.helm.image-name: image.repository
+    # argocd-image-updater.argoproj.io/apiimage.helm.image-tag: image.tag
+    # argocd-image-updater.argoproj.io/apiimage.force-update: "true"
+    # argocd-image-updater.argoproj.io/write-back-method: git:secret:argocd/git-creds
+    # argocd-image-updater.argoproj.io/write-back-target: helmvalues:/deployment/search-ui/values.yaml
+    
+spec:
+  destination:
+    namespace: bio
+    server: https://kubernetes.default.svc
+  project: bio-analysis
+  source:
+    path: helm/bioanalyzer-research-api
+    repoURL: git@github.com:mxinformatics/BioAnalyzer.git
+    targetRevision: HEAD
+    helm:
+      valueFiles:
+        - values.yaml
+  syncPolicy:
+    automated: {}

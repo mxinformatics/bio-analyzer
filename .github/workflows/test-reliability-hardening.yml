@@ -1,0 +1,55 @@
+name: Test reliability hardening (Phases A–D)
+
+on:
+  pull_request:
+    paths:
+      - 'src/BioAnalyzer/**'
+      - 'src/bioanalyzer-chat/**'
+      - 'docs/agentic-chat-hardening-verification.md'
+      - '.github/workflows/test-reliability-hardening.yml'
+  push:
+    branches:
+      - main
+      - 'feature/**'
+    paths:
+      - 'src/BioAnalyzer/**'
+      - 'src/bioanalyzer-chat/**'
+      - '.github/workflows/test-reliability-hardening.yml'
+  workflow_dispatch:
+
+jobs:
+  dotnet-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Test solution
+        run: dotnet test src/BioAnalyzer/BioAnalyzer.sln --configuration Release --verbosity minimal
+
+  chat-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/bioanalyzer-chat
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: src/bioanalyzer-chat/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Unit tests
+        run: npm test

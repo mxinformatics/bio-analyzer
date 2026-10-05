@@ -1,0 +1,6 @@
+@BioAnalyzer.Research.Api_HostAddress = http://localhost:5179
+
+GET {{BioAnalyzer.Research.Api_HostAddress}}/literature/
+Accept: application/json
+
+###

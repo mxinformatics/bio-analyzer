@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod-dns
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/tls-passthrough: "true"
+    cert-manager.io/issue-temporary-certificate: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+  labels:
+    app: argocd-server
+    release: argocd-ingress
+  name: argocd-ui
+  namespace: argocd
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: argocd-prod.verida-apps.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: argocd-server
+                port:
+                  name: https
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - argocd-prod.verida-apps.com
+      secretName: argocd-secret

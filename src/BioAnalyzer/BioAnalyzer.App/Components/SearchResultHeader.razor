@@ -1,0 +1,9 @@
+<div class="results-header">
+    <div class="results-stats">
+        <span class="stat-pill"><strong>Result Count:</strong> @SearchResults.Count</span>
+        <span class="stat-pill"><strong>Start Index:</strong> @SearchResults.RetStart</span>
+    </div>
+    <button class="btn btn-outline-primary" @onclick="@(async () => await SearchNextClicked.InvokeAsync())">
+        Next
+    </button>
+</div>

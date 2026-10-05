@@ -1,0 +1,20 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod-dns
+spec:
+  acme:
+    email: dmaxim@verida.com
+    privateKeySecretRef:
+      name: letsencrypt-prod-dns
+    profile: tlsserver
+    server: https://acme-v02.api.letsencrypt.org/directory
+    solvers:
+    - dns01:
+        azureDNS:
+          environment: AzurePublicCloud
+          hostedZoneName: verida-apps.com
+          managedIdentity:
+            clientID: 1e070976-2c57-4025-8275-c39a6a8346ff
+          resourceGroupName: rg-verida-dns
+          subscriptionID: 6b007381-ecf8-41b1-9256-3c6aa8a81d37

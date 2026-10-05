@@ -1,0 +1,51 @@
+@rendermode InteractiveServer
+<section class="literature-search">
+    <div class="search-panel">
+        <h2 class="search-title">Search Literature</h2>
+        <form method="post" data-enhance @onsubmit="OnSubmit" @formname="literature-search-form">
+            <AntiforgeryToken/>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-9">
+                    <label for="searchTerm" class="form-label search-form-label">Search Term</label>
+                    <InputText id="searchTerm" class="form-control" @bind-Value="@EffectiveSearchCriteria.SearchTerm" placeholder="Enter search term"></InputText>
+                </div>
+                <div class="col-md-3 d-grid">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    @if (_searchInProgress)
+    {
+        <div class="searching-indicator">
+            <p><em>Searching...</em></p>
+        </div>
+    }
+
+    <div id="searchResultsSummary" class="search-results-summary">
+        <SearchResultHeader SearchResults="SearchResults" SearchNextClicked="SearchNext"></SearchResultHeader>
+    </div>
+
+    <div id="searchResults" class="search-results-grid">
+        <AbstractPopup LiteratureReference="_selectedLiteratureReference" PopupClosed="CloseAbstractPopup"></AbstractPopup>
+        <DownloadPopup LiteratureReference="_downloadLiteratureReference" PopupClosed="CloseDownloadPopup"></DownloadPopup>
+        @if (SearchResults.References.Any())
+        {
+            foreach (var reference in SearchResults.References)
+            {
+                <div class="literature-reference">
+                    <ErrorBoundary>
+                        <ChildContent>
+                            <LiteratureReferenceCard LitReference="reference" AbstractQuickViewClicked="ShowAbstractPopup"
+                                                     DownloadReferenceClicked="DownloadReference"></LiteratureReferenceCard>
+                        </ChildContent>
+                        <ErrorContent>
+                            <p>Invalid Literature Reference</p>
+                        </ErrorContent>
+                    </ErrorBoundary>
+                </div>
+            }
+        }
+    </div>
+</section>

@@ -1,0 +1,46 @@
+@rendermode InteractiveServer
+
+@if (!Downloads.Any())
+{
+    <p class="empty-state">No downloads available.</p>
+}
+else
+{
+    <div class="download-grid">
+        @foreach (var literatureDownload in Downloads)
+        {
+            <div class="literature-download">
+                <ErrorBoundary>
+                    <ChildContent>
+                        <LiteratureDownloadCard LiteratureDownload="literatureDownload" DownloadFileClicked="DownloadFile"></LiteratureDownloadCard>
+                    </ChildContent>
+                    <ErrorContent>
+                        <p>Invalid Literature Download</p>
+                    </ErrorContent>
+                </ErrorBoundary>
+            </div>
+        }
+    </div>
+}
+
+<script>
+    function resolveMimeType(fileName) {
+        const lower = (fileName || '').toLowerCase();
+        if (lower.endsWith('.xml') || lower.endsWith('.nxml')) {
+            return 'application/xml';
+        }
+        return 'application/pdf';
+    }
+    window.downloadFileFromStream = async (fileName, contentStreamReference) => {
+        const arrayBuffer = await contentStreamReference.arrayBuffer();
+        const blob = new Blob([arrayBuffer], { type: resolveMimeType(fileName) });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName ?? '';
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    }
+</script>
+

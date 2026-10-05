@@ -1,0 +1,24 @@
+<article class="download-card">
+    <h4 class="download-title">@LiteratureDownload.FileName</h4>
+    <dl class="download-meta">
+        <div class="download-meta-item">
+            <dt>Title:</dt>
+            <dd>@LiteratureDownload.Title</dd>
+        </div>
+        <div class="download-meta-item">
+            <dt>PMC Id:</dt>
+            <dd>@LiteratureDownload.PmcId</dd>
+        </div>
+        <div class="download-meta-item">
+            <dt>DOI:</dt>
+            <dd>@LiteratureDownload.Doi</dd>
+        </div>
+    </dl>
+    <div class="download-actions">
+        <button class="btn btn-primary btn-sm" @onclick="@(async () => await DownloadFileClicked.InvokeAsync(LiteratureDownload.FileName))">
+            Download
+        </button>
+    </div>
+</article>
+
+

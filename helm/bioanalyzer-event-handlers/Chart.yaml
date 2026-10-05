@@ -1,0 +1,17 @@
+apiVersion: v2
+name: bioanalyzer-event-handlers
+description: A Helm chart for deploying BioAnalyzer EventHandlers (Azure Functions) to Kubernetes
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - bioanalyzer
+  - azure-functions
+  - event-handlers
+  - service-bus
+  - dotnet
+maintainers:
+  - name: dmaxim
+    email: dmaxim@example.com
+sources:
+  - https://github.com/mxinformatics/BioAnalyzer

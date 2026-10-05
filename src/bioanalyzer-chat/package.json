@@ -1,0 +1,48 @@
+{
+  "name": "bioanalyzer-chat",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "cross-env NODE_OPTIONS=--use-system-ca next dev --turbopack",
+    "build": "NODE_OPTIONS=--use-system-ca next build --turbopack",
+    "start": "run-script-os",
+    "lint": "eslint",
+    "test": "node --test lib/*.test.mjs",
+    "start:win32": "set NODE_OPTIONS=--use-system-ca && set PORT=%PORT% && next dev",
+    "start:default": "cross-env NODE_OPTIONS=--use-system-ca next dev",
+    "start-container": "cross-env NODE_OPTIONS=--use-system-ca next start"
+  },
+  "dependencies": {
+    "@ai-sdk/azure": "^2.0.53",
+    "@ai-sdk/react": "^2.0.76",
+    "@azure/identity": "^4.13.1",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@radix-ui/react-slot": "^1.2.3",
+    "ai": "^5.0.76",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.546.0",
+    "next": "15.5.6",
+    "next-auth": "^4.24.11",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-intersection-observer": "^9.16.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "tailwind-merge": "^3.3.1",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.6",
+    "run-script-os": "^1.1.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

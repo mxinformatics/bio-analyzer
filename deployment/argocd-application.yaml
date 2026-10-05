@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bioanalyzer-applications
+  namespace: argocd
+spec:
+  destination:
+    namespace: argocd
+    server: https://kubernetes.default.svc
+  project: bio-analysis
+  source:
+    path: deployment/applications
+    repoURL: git@github.com:mxinformatics/BioAnalyzer.git
+    targetRevision: HEAD
+  syncPolicy:
+    automated: {}

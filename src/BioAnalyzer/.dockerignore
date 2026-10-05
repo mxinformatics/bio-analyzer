@@ -1,0 +1,111 @@
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# IDE and editor files
+.vscode/
+.vs/
+*.swp
+*.swo
+*~
+.idea/
+*.user
+*.suo
+*.cache
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# nyc test coverage
+.nyc_output/
+
+# node_modules (if any)
+node_modules/
+
+# Package files
+*.nupkg
+*.snupkg
+
+# Test results
+TestResults/
+test-results/
+*.trx
+*.coverage
+*.coveragexml
+
+# Temporary files
+tmp/
+temp/
+
+# Local environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Docker files (avoid recursive copies)
+**/Dockerfile*
+**/docker-compose*
+**/.dockerignore
+
+# Documentation
+README.md
+*.md
+docs/
+
+# License files
+LICENSE*
+
+# Azure/Cloud specific
+.azure/
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+
+# Secrets
+secrets.json
+*.pfx
+*.p12
+
+# JetBrains
+.idea/
+*.iml
+
+# Visual Studio Code
+.vscode/
+
+# Rider
+.idea/
+
+# Application specific exclusions
+**/wwwroot/dist/
+# Exclude most lib files but keep bootstrap
+**/wwwroot/lib/
+!**/wwwroot/lib/bootstrap/

@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+  annotations:
+    #notifications.argoproj.io/subscribe.on-sync-succeeded.slack: argo-status
+spec:
+  syncPolicy: {} # Manual sync as it appears that a webhook is adding attributes to the webhook and altering the definition
+  destination:
+    namespace: cert-manager
+    server: https://kubernetes.default.svc
+  project: cluster-infrastructure
+  source:
+    chart: cert-manager
+    helm:
+      parameters:
+        - name: installCRDs
+          value: "true"
+        - name: "extraArgs"
+          value: "{--feature-gates=ACMEHTTP01IngressPathTypeExact=false}"
+        - name: "podLabels.azure\\.workload\\.identity/use"
+          value: "true"
+          forceString: true
+        - name: "serviceAccount.labels.azure\\.workload\\.identity/use"
+          value: "true"
+          forceString: true
+    repoURL: https://charts.jetstack.io
+    targetRevision: v1.19.2
+

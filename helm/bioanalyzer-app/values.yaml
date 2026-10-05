@@ -1,0 +1,155 @@
+# Default values for bioanalyzer-app
+replicaCount: 1
+
+image:
+  repository: dmaxim/bioanalyzer-app
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "build-8"
+
+imagePullSecrets: 
+  - name: dm-docker
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "bioanalyzer"
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 2000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: 
+    cert-manager.io/acme-http01-edit-in-place: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/issue-temporary-certificate: "true"
+    kubernetes.io/tls-acme: "true"
+    kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 128K
+    nginx.ingress.kubernetes.io/proxy-buffers: "4 256k"
+    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 256k
+  hosts:
+    - host: bioanalyzer.danmaxim.net
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+   - secretName: bioanalyzer-app-tls
+     hosts:
+       - bioanalyzer.danmaxim.net
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 30
+
+readinessProbe:
+  httpGet:
+    path: /alive
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+# Additional volumes on the output Deployment definition.
+volumes:
+  - name: tmp
+    emptyDir: {}
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Application specific configuration
+config:
+  # ASP.NET Core Environment
+  aspnetcoreEnvironment: Production
+  
+  # Application settings that will be mounted as appsettings.json
+  appSettings:
+    Logging:
+      LogLevel:
+        Default: Information
+        "Microsoft.AspNetCore": Warning
+    AllowedHosts: "*"
+    Events:
+      ServiceBusNamespace: "mxinfo-bioanalyzer-poc-eus.servicebus.windows.net"
+      LiteratureDownloadTopic: "download-document-request"
+      DocumentProcessingRequestedQueue: "document-processing-requested"
+    SecureConfiguration:
+      UseKeyVault: "false"
+      ExcludeEnvironmentCredential: "true"
+      KeyVaultUrl: "https://kv-mxinfo-bioanalyze-poc.vault.azure.net/"
+    AzureAd:
+      Instance: "https://login.microsoftonline.com/"
+      Domain: "mxinformatics.com"
+      TenantId: "38ec304a-0fad-408b-b7cd-e04a2e25b885"
+      ClientId: "1a1153ce-aa48-4c81-8a7d-f2a32dd7ec9f"
+      CallbackPath: "/signin-oidc"
+
+# Azure Service Bus configuration (if using managed identity or connection string)
+azureServiceBus:
+  # Set to true if using Azure Managed Identity
+  useManagedIdentity: false
+  # Connection string secret name (if not using managed identity)
+  connectionStringSecretName: ""
+  connectionStringSecretKey: "connectionString"
+
+# Environment variables
+env: []
+  # - name: AZURE_CLIENT_ID
+  #   value: "your-managed-identity-client-id"
+
+# Secrets to mount as environment variables
+envFromSecrets: []
+  # - secretName: azure-servicebus-secrets

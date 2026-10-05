@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations: {}
+  labels:
+    app: researchapp
+  name: researchapp
+spec:
+  minReadySeconds: 60
+  replicas: 1
+  selector:
+    matchLabels:
+      app: researchapp
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        app: researchapp
+    spec:
+      containers:
+      - args: []
+        envFrom:
+        - configMapRef:
+            name: researchapp
+        image: '{{ .Values.images.researchapp }}'
+        imagePullPolicy: IfNotPresent
+        name: researchapp
+        ports:
+        - containerPort: 8000
+          name: http
+        - containerPort: 8001
+          name: https
+      terminationGracePeriodSeconds: 180

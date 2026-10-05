@@ -1,0 +1,36 @@
+<article class="reference-card">
+    <h4 class="reference-title">@LitReference.Title</h4>
+
+    <dl class="reference-meta">
+        <div class="reference-meta-item">
+            <dt>Id:</dt>
+            <dd>@LitReference.Id</dd>
+        </div>
+        <div class="reference-meta-item">
+            <dt>PMC Id:</dt>
+            <dd>@LitReference.PmcId</dd>
+        </div>
+        <div class="reference-meta-item">
+            <dt>DOI:</dt>
+            <dd>@LitReference.Doi</dd>
+        </div>
+    </dl>
+
+    @if (LitReference.CanDownload || LitReference.HasDoi)
+    {
+        <div class="reference-actions">
+            <button class="btn btn-outline-primary btn-sm" @onclick="@(async () => await AbstractQuickViewClicked.InvokeAsync(LitReference))">
+                Quick View
+            </button>
+            <button class="btn btn-primary btn-sm" @onclick="@(async () => await DownloadReferenceClicked.InvokeAsync(LitReference))">
+                Download
+            </button>
+            @if (LitReference.HasDoi)
+            {
+                <a class="btn btn-outline-secondary btn-sm" href="@LitReference.DoiUrl" target="_blank" rel="noopener noreferrer">
+                    Open DOI
+                </a>
+            }
+        </div>
+    }
+</article>

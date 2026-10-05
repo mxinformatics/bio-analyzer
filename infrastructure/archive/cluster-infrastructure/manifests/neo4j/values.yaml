@@ -1,0 +1,40 @@
+neo4j:
+  name: "neo4j-dev"
+  minimumClusterSize: 1
+  resources:
+    cpu: "0.5"
+    memory: "2Gi"
+  edition: "enterprise"
+  password: "my-password"
+  acceptLicenseAgreement: "yes"
+
+volumes:
+  data:
+    mode: "dynamic"
+    dynamic:
+      # * managed-csi-premium provisions premium SSD disks (recommended)
+      # * managed-csi provisions standard SSD backed disks
+      storageClassName: managed-csi-premium
+additionalVolumes:
+  - name: neo4j-plugins
+    persistentVolumeClaim:
+      claimName: neo4j-plugins
+additionalVolumeMounts:
+  - name: neo4j-plugins
+    mountPath: "/var/lib/neo4j/plugins"
+
+# Services for Neo4j
+services:
+  # A ClusterIP service with the same name as the Helm Release name should be used for Neo4j Driver connections originating inside the
+  # Kubernetes cluster.
+  default:
+    # Annotations for the K8s Service object
+    annotations: { }
+
+  # A LoadBalancer Service for external Neo4j driver applications and Neo4j Browser
+  neo4j:
+    enabled: true
+
+    # Annotations for the K8s Service object
+    annotations: 
+      service.beta.kubernetes.io/azure-load-balancer-internal: "true"

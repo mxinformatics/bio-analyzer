@@ -1,0 +1,31 @@
+services:
+  chunk-api:
+    build:
+      context: .
+      dockerfile: chunk-api/Dockerfile
+    env_file:
+      - ./chunk-api/.env
+    ports:
+      - "8001:8001"
+
+  embed-api:
+    build:
+      context: .
+      dockerfile: embed-api/Dockerfile
+    env_file:
+      - ./embed-api/.env
+    ports:
+      - "8002:8002"
+    depends_on:
+      - chunk-api
+
+  graph-data-api:
+    build:
+      context: .
+      dockerfile: graph-data-api/Dockerfile
+    env_file:
+      - ./graph-data-api/.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - embed-api

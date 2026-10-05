@@ -1,0 +1,54 @@
+.literature-search {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-bottom: 2rem;
+}
+
+.search-panel {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.search-title {
+    margin: 0 0 1rem 0;
+    font-size: 1.35rem;
+}
+
+.search-form-label {
+    font-weight: 600;
+    color: #374151;
+}
+
+.searching-indicator {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #dbeafe;
+    background-color: #eff6ff;
+    border-radius: 0.5rem;
+    color: #1e3a8a;
+}
+
+.searching-indicator p {
+    margin: 0;
+}
+
+.search-results-summary {
+    margin-top: 1rem;
+}
+
+.search-results-grid {
+    margin-top: 1rem;
+    display: grid;
+    gap: 1rem;
+}
+
+.literature-reference {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.1rem 1.25rem;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}

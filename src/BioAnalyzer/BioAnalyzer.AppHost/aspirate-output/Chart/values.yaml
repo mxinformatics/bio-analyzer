@@ -1,0 +1,5 @@
+images:
+  researchapi: researchapi:latest
+  researchapp: researchapp:latest
+  eventhandlers: eventhandlers:latest
+  aspiredashboard: mcr.microsoft.com/dotnet/aspire-dashboard:9.0

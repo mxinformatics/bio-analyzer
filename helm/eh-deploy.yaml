@@ -1,0 +1,104 @@
+---
+# Source: bioanalyzer-event-handlers/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bioanalyzer-event-handlers
+  labels:
+    helm.sh/chart: bioanalyzer-event-handlers-0.1.0
+    app.kubernetes.io/name: bioanalyzer-event-handlers
+    app.kubernetes.io/instance: bioanalyzer-event-handlers
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: event-handler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bioanalyzer-event-handlers
+      app.kubernetes.io/instance: bioanalyzer-event-handlers
+  template:
+    metadata:
+      annotations:
+      labels:
+        helm.sh/chart: bioanalyzer-event-handlers-0.1.0
+        app.kubernetes.io/name: bioanalyzer-event-handlers
+        app.kubernetes.io/instance: bioanalyzer-event-handlers
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: event-handler
+    spec:
+      imagePullSecrets:
+        - name: dm-docker
+      serviceAccountName: bioanalyzer
+      securityContext:
+        fsGroup: 2000
+      containers:
+        - name: bioanalyzer-event-handlers
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+          image: "dmaxim/bioanalyzer-event-handlers:build-4"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          env:
+            
+            # Custom environment variables
+            - name: LiteratureDownloadedTable
+              value: DownloadedLiterature
+            - name: DownloadDocumentQueue
+              value: download-document
+            - name: BuildDocumentListQueue
+              value: build-document-list
+            - name: DocumentDownloadedTopic
+              value: document-downloaded
+            - name: ExtractDocumentTextQueue
+              value: extract-document-text
+            - name: TextExtractedTopic
+              value: text-extracted
+            - name: ProcessExtractedTextQueue
+              value: process-extracted-text
+          
+          # Azure Functions environment variables           
+          # Environment variables from secrets
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /app/lit-references
+              name: lit-references
+      volumes:
+        - emptyDir: {}
+          name: tmp
+        - emptyDir: {}
+          name: lit-references

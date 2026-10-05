@@ -1,0 +1,87 @@
+@rendermode InteractiveServer
+
+@if(_literatureReference != null)
+{
+    <div class="modal fade show d-block" id="downloadPopup" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="titleLabel">Download View</h5>
+                    <button type="button" class="close btn btn-lg" @onclick="@Close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    @if (_isDownloading)
+                    {
+                        <div class="row">
+                            <p><em>....Downloading</em></p>
+                        </div>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(_errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @_errorMessage
+                        </div>
+                        @if (_literatureReference?.HasDoi == true)
+                        {
+                            <div class="mb-2">
+                                <a class="btn btn-outline-secondary btn-sm" href="@_literatureReference.DoiUrl" target="_blank" rel="noopener noreferrer">
+                                    Open article via DOI
+                                </a>
+                            </div>
+                        }
+                        <div class="mb-2">
+                            <label class="form-label">Upload article file (.pdf, .xml, .nxml)</label>
+                            <InputFile OnChange="OnManualFileSelected" accept=".pdf,.xml,.nxml" />
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(_uploadMessage))
+                        {
+                            <div class="alert alert-info" role="alert">
+                                @_uploadMessage
+                            </div>
+                        }
+                    }
+                    else if (_literatureReference is { CanDownload: false })
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            Automatic download is unavailable for this article.
+                        </div>
+                        @if (_literatureReference.HasDoi)
+                        {
+                            <div class="mb-2">
+                                <a class="btn btn-outline-secondary btn-sm" href="@_literatureReference.DoiUrl" target="_blank" rel="noopener noreferrer">
+                                    Open article via DOI
+                                </a>
+                            </div>
+                        }
+                        <div class="mb-2">
+                            <label class="form-label">Upload article file (.pdf, .xml, .nxml)</label>
+                            <InputFile OnChange="OnManualFileSelected" accept=".pdf,.xml,.nxml" />
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(_uploadMessage))
+                        {
+                            <div class="alert alert-info" role="alert">
+                                @_uploadMessage
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="modal-footer">
+                    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="@Retry">Retry</button>
+                    }
+                    @if (_isUploading)
+                    {
+                        <span><em>Uploading and queueing for processing...</em></span>
+                    }
+                    <button type="button" class="btn btn-outline-primary" @onclick="@Close">Close</button>
+                </div>
+            </div>
+        </div>
+          
+    </div>  
+}
+
+

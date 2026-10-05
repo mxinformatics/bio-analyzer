@@ -1,0 +1,4 @@
+# Convenience aggregate for local development tooling across all services.
+-r chunk-api/requirements.txt
+-r embed-api/requirements.txt
+-r graph-data-api/requirements.txt

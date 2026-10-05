@@ -1,0 +1,34 @@
+# Default values for external-secrets
+# This chart deploys SecretStore and ExternalSecret resources for Azure Key Vault integration
+
+# External Secrets configuration
+externalSecrets:
+  # Service account name with workload identity federation
+  serviceAccountName: "kb-applications"
+  # Azure Key Vault URL
+  vaultUrl: "https://kv-verida-ka-prod.vault.azure.net/"
+  # Azure AD Tenant ID
+  tenantId: "2294886d-061e-4937-adcd-87bc06af44e2"
+  # Name of the SecretStore resource
+  secretStoreName: "kb-applications-secret-store"
+  # Name of the target Kubernetes Secret that will be created
+  targetSecretName: "kb-applications-secrets"
+  # Refresh interval for syncing secrets from Key Vault
+  refreshInterval: "5m"
+  
+neo4jSecrets:
+  # Name of the target Kubernetes Secret for Neo4j credentials
+  targetSecretName: "neo4j-secrets"
+
+neo4jSecretConfig:
+  # Key Vault secret names for Neo4j credentials
+  NEO4J_AUTH: Neo4j-Auth
+
+# Secret configuration - mapping of Kubernetes secret keys to Azure Key Vault secret names
+secretConfig:
+  # Neo4j database credentials
+  GraphDatabase-Username: GraphDatabase--Username
+  GraphDatabase-Password: GraphDatabase--Password
+  NEO4J_AUTH: Neo4j-Auth
+
+

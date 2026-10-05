@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-workflows-prod
+  namespace: argocd
+spec:
+  destination:
+    namespace: argo
+    server: 'https://kubernetes.default.svc'
+  project: cluster-infrastructure
+  sources:
+  - chart: argo-workflows
+    repoURL: https://argoproj.github.io/argo-helm
+    targetRevision: 0.45.4
+    helm:
+      releaseName: argo-workflows
+      
+  # - path: deployment/infrastructure/argo-workflows/dev/resources
+  #   repoURL: git@ssh.dev.azure.com:v3/setrans/AppDev/poc-verida-kb
+  #   targetRevision: feature/dmaxim/argo-events
+  project: cluster-infrastructure
+  syncPolicy:
+    automated: {}
