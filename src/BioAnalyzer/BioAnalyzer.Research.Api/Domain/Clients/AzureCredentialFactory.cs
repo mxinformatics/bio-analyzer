@@ -1,5 +1,4 @@
 using Azure.Core;
-using Azure.Identity;
 using BioAnalyzer.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -13,16 +12,19 @@ public class AzureCredentialFactory(IOptions<SecureConfiguration> secureConfigur
     
     public TokenCredential Create()
     {
-        var options = new DefaultAzureCredentialOptions();
-
-        if (!string.IsNullOrWhiteSpace(_secureConfiguration.IdentityClientId))
+        if (!string.IsNullOrWhiteSpace(_secureConfiguration.IdentityClientId)
+            && !_secureConfiguration.ExcludeManagedIdentityCredential)
         {
             logger.LogInformation("Using Managed Identity with client ID: {ClientId}", _secureConfiguration.IdentityClientId);
-            options.ManagedIdentityClientId = _secureConfiguration.IdentityClientId;
-            return new DefaultAzureCredential(options);
         }
-        
-        logger.LogInformation("Using Default Azure Credential for authentication");
-        return new DefaultAzureCredential(options);
+        else
+        {
+            logger.LogInformation(
+                "Using Default Azure Credential (ExcludeEnvironment={ExcludeEnvironment}, ExcludeManagedIdentity={ExcludeManagedIdentity})",
+                _secureConfiguration.ExcludeEnvironmentCredential,
+                _secureConfiguration.ExcludeManagedIdentityCredential);
+        }
+
+        return _secureConfiguration.CreateTokenCredential();
     }
 }

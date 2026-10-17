@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Azure.Identity;
 using Azure.Messaging.ServiceBus;
+using BioAnalyzer.Infrastructure.Configuration;
 using BioAnalyzer.Research.Api.Infrastructure;
 using Microsoft.Extensions.Options;
 
@@ -13,11 +13,14 @@ public sealed class EventBusClient : IEventBusClient, IAsyncDisposable
     private readonly ILogger<EventBusClient> _logger;
     private bool _disposed;
 
-    public EventBusClient(IOptions<EventConfiguration> eventConfiguration, ILogger<EventBusClient> logger)
+    public EventBusClient(
+        IOptions<EventConfiguration> eventConfiguration,
+        IAzureCredentialFactory credentialFactory,
+        ILogger<EventBusClient> logger)
     {
         var config = eventConfiguration.Value;
         _logger = logger;
-        _client = new ServiceBusClient(config.ServiceBusNamespace, new DefaultAzureCredential());
+        _client = new ServiceBusClient(config.ServiceBusNamespace, credentialFactory.Create());
         _literatureDownloadSender = _client.CreateSender(config.LiteratureDownloadTopic);
         _logger.LogInformation(
             "Research.Api EventBusClient initialized for namespace {Namespace}, topic {Topic}",

@@ -1,8 +1,8 @@
-using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using BioAnalyzer.App.Contracts.Clients;
 using BioAnalyzer.App.Infrastructure;
 using BioAnalyzer.App.Models.Messages;
+using BioAnalyzer.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -17,7 +17,10 @@ public class EventBusClient : IEventBusClient
     private readonly ILogger<EventBusClient> _logger;
     private bool _disposed;
 
-    public EventBusClient(IOptions<EventConfiguration> eventConfiguration, ILogger<EventBusClient> logger)
+    public EventBusClient(
+        IOptions<EventConfiguration> eventConfiguration,
+        IOptions<SecureConfiguration> secureConfiguration,
+        ILogger<EventBusClient> logger)
     {
         _eventConfiguration = eventConfiguration.Value;
         _logger = logger;
@@ -27,7 +30,7 @@ public class EventBusClient : IEventBusClient
         
         _client = new ServiceBusClient(
             _eventConfiguration.ServiceBusNamespace,
-            new DefaultAzureCredential());
+            secureConfiguration.Value.CreateTokenCredential());
         _literatureDownloadSender = _client.CreateSender(_eventConfiguration.LiteratureDownloadTopic);
         _documentProcessingSender = _client.CreateSender(_eventConfiguration.DocumentProcessingRequestedQueue);
     }

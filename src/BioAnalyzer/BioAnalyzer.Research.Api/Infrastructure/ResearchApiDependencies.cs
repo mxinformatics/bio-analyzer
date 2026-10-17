@@ -2,7 +2,6 @@ using Azure.AI.Inference;
 using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
-using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using BioAnalyzer.AzureStorage.Contexts;
 using BioAnalyzer.AzureStorage.Contracts;
@@ -117,17 +116,13 @@ services.AddScoped<ILiteratureSearchService, LiteratureSearchService>();
         }
         secureConfiguration.ThrowIfInvalid();
 
+        builder.Services.Configure<SecureConfiguration>(builder.Configuration.GetSection("SecureConfiguration"));
+
         if (secureConfiguration.UseKeyVault)
         {
             var secretClient = new SecretClient(
                 new Uri(secureConfiguration.KeyVaultUrl),
-                new DefaultAzureCredential(
-                    new DefaultAzureCredentialOptions
-                    {
-                        ExcludeVisualStudioCredential = true,
-                        ExcludeEnvironmentCredential = secureConfiguration.ExcludeEnvironmentCredential
-                    }
-                ));
+                secureConfiguration.CreateTokenCredential());
 
             builder.Configuration.AddAzureKeyVault(secretClient, new KeyVaultSecretManager());    
         }

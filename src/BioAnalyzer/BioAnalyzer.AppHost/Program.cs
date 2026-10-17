@@ -1,5 +1,6 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using Microsoft.Extensions.Configuration;
 // ReSharper disable InconsistentNaming
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -16,8 +17,20 @@ const string uvCertifiCaBundle = ".venv/lib/python3.13/site-packages/certifi/cac
 
 var keyVaultUrl = builder.Configuration["KeyVault:Url"]
     ?? throw new InvalidOperationException("KeyVault:Url is not configured.");
-Console.WriteLine($"Fetching Neo4j password from Key Vault ({keyVaultUrl})...");
-var secretClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
+// AppHost is a local orchestrator: default to excluding Environment + Managed Identity so
+// Azure.Core 1.59+ IMDS capability probes do not stall startup for ~3 minutes off-Azure.
+var excludeEnvironmentCredential = builder.Configuration.GetValue("KeyVault:ExcludeEnvironmentCredential", true);
+var excludeManagedIdentityCredential = builder.Configuration.GetValue("KeyVault:ExcludeManagedIdentityCredential", true);
+Console.WriteLine(
+    $"Fetching Neo4j password from Key Vault ({keyVaultUrl}) " +
+    $"[ExcludeEnvironment={excludeEnvironmentCredential}, ExcludeManagedIdentity={excludeManagedIdentityCredential}]...");
+var keyVaultCredential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+{
+    ExcludeVisualStudioCredential = true,
+    ExcludeEnvironmentCredential = excludeEnvironmentCredential,
+    ExcludeManagedIdentityCredential = excludeManagedIdentityCredential
+});
+var secretClient = new SecretClient(new Uri(keyVaultUrl), keyVaultCredential);
 var neo4jPassword = secretClient.GetSecret("GraphDatabase--Password").Value.Value;
 
 var neo4j = builder
