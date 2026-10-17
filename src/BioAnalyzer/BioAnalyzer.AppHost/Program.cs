@@ -159,17 +159,23 @@ builder.AddProject<Projects.BioAnalyzer_App>("researchApp")
     .PublishAsDockerFile();
 
 
-builder.AddJavaScriptApp("react", "../../bioanalyzer-chat", "start")
-    // Deps are installed manually (npm install — see src/bioanalyzer-chat README); Aspire's
-    // auto-installer rewrites node_modules at startup and broke the start script.
+// Next.js helper runs the package "dev" script (next dev) and wires PORT correctly.
+// Use WithNpm(install: false): Aspire's installer has previously rewritten node_modules/.bin
+// as plain script copies, which breaks packages that require('./…') (e.g. run-script-os).
+#pragma warning disable ASPIREJAVASCRIPT001 // AddNextJsApp is experimental
+builder.AddNextJsApp("react", "../../bioanalyzer-chat", "dev")
     .WithNpm(install: false)
     .WithReference(researchApi)
     .WaitFor(researchApi)
     .WithHttpEndpoint(env: "PORT", name: "http", port: 3000)
+    .WithEnvironment("NODE_OPTIONS", "--use-system-ca")
     .WithEnvironment("RESEARCH_API_KEY", researchApiKey)
     //.WithEnvironment("SEARCH_API_BASE_URL", searchApi.Resource.GetEndpoint("http"))
     .WithExternalHttpEndpoints()
+    // next.config does not set output:"standalone" yet; skip publish-time validation.
+    .DisableBuildValidation()
     .PublishAsDockerFile();
+#pragma warning restore ASPIREJAVASCRIPT001
 
 
 
