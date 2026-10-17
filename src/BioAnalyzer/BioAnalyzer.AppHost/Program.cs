@@ -145,7 +145,7 @@ builder.AddProject<Projects.BioAnalyzer_App>("researchApp")
     .PublishAsDockerFile();
 
 
-builder.AddNpmApp("react", "../../bioanalyzer-chat")
+builder.AddJavaScriptApp("react", "../../bioanalyzer-chat", "start")
     .WithReference(researchApi)
     .WaitFor(researchApi)
     .WithHttpEndpoint(env: "PORT", name: "http", port: 3000)
