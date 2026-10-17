@@ -146,6 +146,9 @@ builder.AddProject<Projects.BioAnalyzer_App>("researchApp")
 
 
 builder.AddJavaScriptApp("react", "../../bioanalyzer-chat", "start")
+    // Deps are installed manually (npm install — see src/bioanalyzer-chat README); Aspire's
+    // auto-installer rewrites node_modules at startup and broke the start script.
+    .WithNpm(install: false)
     .WithReference(researchApi)
     .WaitFor(researchApi)
     .WithHttpEndpoint(env: "PORT", name: "http", port: 3000)
