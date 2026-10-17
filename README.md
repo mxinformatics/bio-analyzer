@@ -1,5 +1,9 @@
 # BioAnalyzer
 
+## Purpose
+
+BioAnalyzer streamlines the research process by facilitating searches for journal articles and providing summarization and query capabilities. Researchers can search biological literature, download the articles they need, and ask questions against the indexed documents to get cited answers.
+
 
 ## Genterating Helm Chart For App Host
 
