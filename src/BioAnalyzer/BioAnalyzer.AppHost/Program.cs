@@ -16,6 +16,7 @@ const string uvCertifiCaBundle = ".venv/lib/python3.13/site-packages/certifi/cac
 
 var keyVaultUrl = builder.Configuration["KeyVault:Url"]
     ?? throw new InvalidOperationException("KeyVault:Url is not configured.");
+Console.WriteLine($"Fetching Neo4j password from Key Vault ({keyVaultUrl})...");
 var secretClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
 var neo4jPassword = secretClient.GetSecret("GraphDatabase--Password").Value.Value;
 
