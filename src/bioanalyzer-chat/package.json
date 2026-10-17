@@ -3,14 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS=--use-system-ca next dev --turbopack",
-    "build": "NODE_OPTIONS=--use-system-ca next build --turbopack",
-    "start": "run-script-os",
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next dev",
     "lint": "eslint",
     "test": "node --test lib/*.test.mjs",
-    "start:win32": "set NODE_OPTIONS=--use-system-ca && set PORT=%PORT% && next dev",
-    "start:default": "cross-env NODE_OPTIONS=--use-system-ca next dev",
-    "start-container": "cross-env NODE_OPTIONS=--use-system-ca next start"
+    "start-container": "next start"
   },
   "dependencies": {
     "@ai-sdk/azure": "^2.0.53",
@@ -38,10 +36,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.6",
-    "run-script-os": "^1.1.6",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

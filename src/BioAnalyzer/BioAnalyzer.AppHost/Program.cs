@@ -1,5 +1,6 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using Microsoft.Extensions.Configuration;
 // ReSharper disable InconsistentNaming
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -16,7 +17,20 @@ const string uvCertifiCaBundle = ".venv/lib/python3.13/site-packages/certifi/cac
 
 var keyVaultUrl = builder.Configuration["KeyVault:Url"]
     ?? throw new InvalidOperationException("KeyVault:Url is not configured.");
-var secretClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
+// AppHost is a local orchestrator: default to excluding Environment + Managed Identity so
+// Azure.Core 1.59+ IMDS capability probes do not stall startup for ~3 minutes off-Azure.
+var excludeEnvironmentCredential = builder.Configuration.GetValue("KeyVault:ExcludeEnvironmentCredential", true);
+var excludeManagedIdentityCredential = builder.Configuration.GetValue("KeyVault:ExcludeManagedIdentityCredential", true);
+Console.WriteLine(
+    $"Fetching Neo4j password from Key Vault ({keyVaultUrl}) " +
+    $"[ExcludeEnvironment={excludeEnvironmentCredential}, ExcludeManagedIdentity={excludeManagedIdentityCredential}]...");
+var keyVaultCredential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+{
+    ExcludeVisualStudioCredential = true,
+    ExcludeEnvironmentCredential = excludeEnvironmentCredential,
+    ExcludeManagedIdentityCredential = excludeManagedIdentityCredential
+});
+var secretClient = new SecretClient(new Uri(keyVaultUrl), keyVaultCredential);
 var neo4jPassword = secretClient.GetSecret("GraphDatabase--Password").Value.Value;
 
 var neo4j = builder
@@ -145,14 +159,23 @@ builder.AddProject<Projects.BioAnalyzer_App>("researchApp")
     .PublishAsDockerFile();
 
 
-builder.AddNpmApp("react", "../../bioanalyzer-chat")
+// Next.js helper runs the package "dev" script (next dev) and wires PORT correctly.
+// Use WithNpm(install: false): Aspire's installer has previously rewritten node_modules/.bin
+// as plain script copies, which breaks packages that require('./…') (e.g. run-script-os).
+#pragma warning disable ASPIREJAVASCRIPT001 // AddNextJsApp is experimental
+builder.AddNextJsApp("react", "../../bioanalyzer-chat", "dev")
+    .WithNpm(install: false)
     .WithReference(researchApi)
     .WaitFor(researchApi)
     .WithHttpEndpoint(env: "PORT", name: "http", port: 3000)
+    .WithEnvironment("NODE_OPTIONS", "--use-system-ca")
     .WithEnvironment("RESEARCH_API_KEY", researchApiKey)
     //.WithEnvironment("SEARCH_API_BASE_URL", searchApi.Resource.GetEndpoint("http"))
     .WithExternalHttpEndpoints()
+    // next.config does not set output:"standalone" yet; skip publish-time validation.
+    .DisableBuildValidation()
     .PublishAsDockerFile();
+#pragma warning restore ASPIREJAVASCRIPT001
 
 
 
