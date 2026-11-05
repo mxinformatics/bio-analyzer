@@ -1,0 +1,28 @@
+[project]
+name = "agentic-process"
+version = "0.1.0"
+description = "Hands-on workspace for AI Agents in Action (Manning)"
+readme = "README.md"
+authors = [
+    { name = "Dan Maxim", email = "dmaxim@mxinformatics.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.28.1",
+    "pydantic>=2.14.3",
+    "python-dotenv>=1.2.4",
+]
+
+[project.scripts]
+agentic-process = "agentic_process.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.4.0",
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
+]
