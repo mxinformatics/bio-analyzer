@@ -16,21 +16,24 @@ public class LiteratureController(
     ILiteratureService literatureService) : ControllerBase
 {
     private const string DefaultContentType = "application/json";
-    
+
     [HttpGet(Name = "SearchLiterature")]
     [ProducesResponseType(typeof(EntrezSearchResult), 200, contentType: DefaultContentType)]
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
-    public async Task<ActionResult<EntrezSearchResult>> Search([FromQuery] string query, [FromQuery] int startIndex, CancellationToken cancellationToken)
+    public async Task<ActionResult<EntrezSearchResult>> Search([FromQuery] string query, [FromQuery] int startIndex,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
             return BadRequest("Query cannot be null or empty.");
         }
-var result = await literatureSearchService.SearchLiteratureAsync(query, startIndex, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        var result = await literatureSearchService
+            .SearchLiteratureAsync(query, startIndex, cancellationToken: cancellationToken).ConfigureAwait(false);
         return Ok(result);
     }
-    
+
     [HttpGet("summary", Name = "GetLiteratureSummary")]
     [ProducesResponseType(typeof(IList<EntrezSummaryResult>), 200, contentType: DefaultContentType)]
     [ProducesResponseType(500)]
@@ -122,13 +125,15 @@ var result = await literatureSearchService.SearchLiteratureAsync(query, startInd
 
         return Ok(result);
     }
-    
-[HttpGet("download", Name = "DownloadLiteratureReference")]
+
+    [HttpGet("download", Name = "DownloadLiteratureReference")]
     [ProducesResponseType(typeof(LiteratureDownloadLinkResult), 200, contentType: DefaultContentType)]
     [ProducesResponseType(500)]
-    public async Task<ActionResult<LiteratureDownloadLinkResult>> DownloadReference([FromQuery] string pmcId, CancellationToken cancellationToken)
+    public async Task<ActionResult<LiteratureDownloadLinkResult>> DownloadReference([FromQuery] string pmcId,
+        CancellationToken cancellationToken)
     {
-        var downloadLinkResponse = await literatureSearchService.GetLiteratureDownloadLinkAsync(pmcId, cancellationToken).ConfigureAwait(false);
+        var downloadLinkResponse = await literatureSearchService
+            .GetLiteratureDownloadLinkAsync(pmcId, cancellationToken).ConfigureAwait(false);
         return Ok(downloadLinkResponse);
     }
 
@@ -148,7 +153,7 @@ var result = await literatureSearchService.SearchLiteratureAsync(query, startInd
             return BadRequest("Query cannot be null or empty.");
         }
 
-var result = await literatureExpansionService
+        var result = await literatureExpansionService
             .FindCandidatesAsync(request, cancellationToken)
             .ConfigureAwait(false);
         return Ok(result);
@@ -161,7 +166,7 @@ var result = await literatureExpansionService
     [ProducesResponseType(typeof(LiteratureIngestResponse), StatusCodes.Status200OK, DefaultContentType)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-public async Task<ActionResult<LiteratureIngestResponse>> RequestIngest(
+    public async Task<ActionResult<LiteratureIngestResponse>> RequestIngest(
         [FromBody] LiteratureIngestRequest request,
         CancellationToken cancellationToken)
     {
