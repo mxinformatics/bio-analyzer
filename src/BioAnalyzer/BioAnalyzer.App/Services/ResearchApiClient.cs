@@ -76,12 +76,7 @@ public class ResearchApiClient(HttpClient httpClient, ILogger<ResearchApiClient>
         var result = await response.Content
             .ReadFromJsonAsync<LiteratureDownload>(cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        if (result == null)
-        {
-            throw new InvalidOperationException("Manual upload response content is null.");
-        }
-
-        return result;
+        return result ?? throw new InvalidOperationException("Manual upload response content is null.");
     }
 
     public async Task<IList<LiteratureSummaryResult>> GetLiteratureSummary(IList<string> ids, CancellationToken cancellationToken = default)
