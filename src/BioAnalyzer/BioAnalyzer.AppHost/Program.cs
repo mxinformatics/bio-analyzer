@@ -7,6 +7,18 @@ var builder = DistributedApplication.CreateBuilder(args);
 const string uvVenvPython = "./.venv/bin/python";
 const string uvCertifiCaBundle = ".venv/lib/python3.13/site-packages/certifi/cacert.pem";
 
+// AppHost:Profile controls which resources auto-start for local work.
+//   full       — entire stack (default in appsettings.json; backward compatible)
+//   research   — neo4j + graph-data-api + researchApi (agent / graph-RAG lab)
+//   literature — researchApi only (Entrez/OA literature client tests)
+// Override via env AppHost__Profile or appsettings.
+var profile = NormalizeProfile(builder.Configuration["AppHost:Profile"]);
+var enableGraphStack = profile is AppHostProfile.Full or AppHostProfile.Research;
+var enablePipeline = profile is AppHostProfile.Full;
+var enableUi = profile is AppHostProfile.Full;
+
+Console.WriteLine($"AppHost profile: {profile} (graph={enableGraphStack}, pipeline={enablePipeline}, ui={enableUi})");
+
 //
 // var sql = builder.AddSqlServer("bioAnalyzerSql")
 //     .WithVolume("bioAnalyzerSqlData", "/var/opt/mssql");
@@ -15,124 +27,135 @@ const string uvCertifiCaBundle = ".venv/lib/python3.13/site-packages/certifi/cac
 // var db = sql
 //     .AddDatabase("BioAnalyzer");
 
-var keyVaultUrl = builder.Configuration["KeyVault:Url"]
-    ?? throw new InvalidOperationException("KeyVault:Url is not configured.");
-// AppHost is a local orchestrator: default to excluding Environment + Managed Identity so
-// Azure.Core 1.59+ IMDS capability probes do not stall startup for ~3 minutes off-Azure.
-var excludeEnvironmentCredential = builder.Configuration.GetValue("KeyVault:ExcludeEnvironmentCredential", true);
-var excludeManagedIdentityCredential = builder.Configuration.GetValue("KeyVault:ExcludeManagedIdentityCredential", true);
-Console.WriteLine(
-    $"Fetching Neo4j password from Key Vault ({keyVaultUrl}) " +
-    $"[ExcludeEnvironment={excludeEnvironmentCredential}, ExcludeManagedIdentity={excludeManagedIdentityCredential}]...");
-var keyVaultCredential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+IResourceBuilder<ContainerResource>? neo4j = null;
+IResourceBuilder<ExecutableResource>? chunkApi = null;
+IResourceBuilder<ExecutableResource>? embeddingApi = null;
+IResourceBuilder<ExecutableResource>? graphDataApi = null;
+
+if (enableGraphStack)
 {
-    ExcludeVisualStudioCredential = true,
-    ExcludeEnvironmentCredential = excludeEnvironmentCredential,
-    ExcludeManagedIdentityCredential = excludeManagedIdentityCredential
-});
-var secretClient = new SecretClient(new Uri(keyVaultUrl), keyVaultCredential);
-var neo4jPassword = secretClient.GetSecret("GraphDatabase--Password").Value.Value;
+    var keyVaultUrl = builder.Configuration["KeyVault:Url"]
+        ?? throw new InvalidOperationException("KeyVault:Url is not configured.");
+    // AppHost is a local orchestrator: default to excluding Environment + Managed Identity so
+    // Azure.Core 1.59+ IMDS capability probes do not stall startup for ~3 minutes off-Azure.
+    var excludeEnvironmentCredential = builder.Configuration.GetValue("KeyVault:ExcludeEnvironmentCredential", true);
+    var excludeManagedIdentityCredential = builder.Configuration.GetValue("KeyVault:ExcludeManagedIdentityCredential", true);
+    Console.WriteLine(
+        $"Fetching Neo4j password from Key Vault ({keyVaultUrl}) " +
+        $"[ExcludeEnvironment={excludeEnvironmentCredential}, ExcludeManagedIdentity={excludeManagedIdentityCredential}]...");
+    var keyVaultCredential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+    {
+        ExcludeVisualStudioCredential = true,
+        ExcludeEnvironmentCredential = excludeEnvironmentCredential,
+        ExcludeManagedIdentityCredential = excludeManagedIdentityCredential
+    });
+    var secretClient = new SecretClient(new Uri(keyVaultUrl), keyVaultCredential);
+    var neo4jPassword = secretClient.GetSecret("GraphDatabase--Password").Value.Value;
 
-var neo4j = builder
-    .AddContainer("neo4j", "neo4j", "2025.05.0-enterprise")
-    .WithEndpoint(port: 7474, targetPort: 7474, name: "http", scheme: "http")
-    .WithEndpoint(port: 7687, targetPort: 7687, name: "bolt", scheme: "bolt")
-    .WithEnvironment("NEO4J_AUTH", $"neo4j/{neo4jPassword}")
-    .WithEnvironment("NEO4J_ACCEPT_LICENSE_AGREEMENT", "yes")
-    .WithEnvironment("NEO4J_apoc_export_file_enabled", "true")
-    .WithEnvironment("NEO4J_apoc_import_file_enabled", "true")
-    .WithEnvironment("NEO4J_apoc_import_file_use__neo4j__config", "true")
-    .WithEnvironment("NEO4J_PLUGINS", "[\"apoc\", \"graph-data-science\"]")
-    .WithEnvironment("NEO4J_dbms_security_procedures_unrestricted", "apoc.*,gds.*,semantics.*,n10s.*")
-    .WithEnvironment("NEO4J_dbms_unmanaged__extension__classes", "n10s.endpoint=/rdf")
-    .WithEnvironment("NEO4J_dbms_security_allow__csv__import__from__file__urls", "true")
-    .WithEnvironment("NEO4J_server_directories_import", "/var/lib/neo4j/import")
-    .WithEnvironment("NEO4J_dbms_databases_seed__from__uri__providers", "URLConnectionSeedProvider")
-    .WithBindMount("../../pipeline/.pipeline-data/data/data", "/var/lib/neo4j/data")
-    .WithBindMount("../../pipeline/.pipeline-data/data/import", "/var/lib/neo4j/import")
-    .WithBindMount("../../pipeline/.pipeline-data/data/conf", "/var/lib/neo4j/conf")
-    .WithBindMount("../../pipeline/.pipeline-data/data/plugins", "/var/lib/neo4j/plugins")
-    .WithBindMount("../../pipeline/.pipeline-data/data/rdf", "/rdf");
+    neo4j = builder
+        .AddContainer("neo4j", "neo4j", "2025.05.0-enterprise")
+        .WithEndpoint(port: 7474, targetPort: 7474, name: "http", scheme: "http")
+        .WithEndpoint(port: 7687, targetPort: 7687, name: "bolt", scheme: "bolt")
+        .WithEnvironment("NEO4J_AUTH", $"neo4j/{neo4jPassword}")
+        .WithEnvironment("NEO4J_ACCEPT_LICENSE_AGREEMENT", "yes")
+        .WithEnvironment("NEO4J_apoc_export_file_enabled", "true")
+        .WithEnvironment("NEO4J_apoc_import_file_enabled", "true")
+        .WithEnvironment("NEO4J_apoc_import_file_use__neo4j__config", "true")
+        .WithEnvironment("NEO4J_PLUGINS", "[\"apoc\", \"graph-data-science\"]")
+        .WithEnvironment("NEO4J_dbms_security_procedures_unrestricted", "apoc.*,gds.*,semantics.*,n10s.*")
+        .WithEnvironment("NEO4J_dbms_unmanaged__extension__classes", "n10s.endpoint=/rdf")
+        .WithEnvironment("NEO4J_dbms_security_allow__csv__import__from__file__urls", "true")
+        .WithEnvironment("NEO4J_server_directories_import", "/var/lib/neo4j/import")
+        .WithEnvironment("NEO4J_dbms_databases_seed__from__uri__providers", "URLConnectionSeedProvider")
+        .WithBindMount("../../pipeline/.pipeline-data/data/data", "/var/lib/neo4j/data")
+        .WithBindMount("../../pipeline/.pipeline-data/data/import", "/var/lib/neo4j/import")
+        .WithBindMount("../../pipeline/.pipeline-data/data/conf", "/var/lib/neo4j/conf")
+        .WithBindMount("../../pipeline/.pipeline-data/data/plugins", "/var/lib/neo4j/plugins")
+        .WithBindMount("../../pipeline/.pipeline-data/data/rdf", "/rdf");
 
-var chunkApi = builder
-    .AddExecutable(
-        "chunk-api",
-        uvVenvPython,
-        "../../pipeline/chunk-api",
-        "-m",
-        "uvicorn",
-        "main:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8001")
-    .WithEnvironment("REQUIRE_API_KEY", "false")
-    .WithEnvironment("AZURE_STORAGE_ACCOUNT", "bioanalyzerpoc")
-    .WithEnvironment("AZURE_STORAGE_CHUNKS_CONTAINER", "extractedtext")
-    .WithEnvironment("SOURCE_TIMEOUT_SECONDS", "60")
-    .WithEnvironment("MAX_SOURCE_BYTES", "41943040")
-    .WithEnvironment("AZURE_STORAGE_SOURCE_CONTAINER", "literature")
-    .WithEnvironment("DEFAULT_CHUNK_SIZE", "1600")
-    .WithEnvironment("DEFAULT_CHUNK_OVERLAP", "250")
-    .WithHttpEndpoint(port: 8001, targetPort: 8001, name: "http", isProxied: false);
+    graphDataApi = builder
+        .AddExecutable(
+            "graph-data-api",
+            uvVenvPython,
+            "../../pipeline/graph-data-api",
+            "-m",
+            "uvicorn",
+            "main:app",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8080")
+        .WithEnvironment("REQUIRE_API_KEY", "false")
+        .WithEnvironment("AZURE_STORAGE_ACCOUNT", "bioanalyzerpoc")
+        .WithEnvironment("AZURE_STORAGE_EMBEDDING_CONTAINER", "embeddedchunks")
+        .WithEnvironment("NEO4J_URI", "bolt://localhost:7687")
+        .WithEnvironment("NEO4J_DATABASE", "bio")
+        .WithEnvironment("NEO4J_VECTOR_INDEX", "bio_embedding_index")
+        .WithEnvironment("NEO4J_TEXT_INDEX", "bio_text_index")
+        .WithEnvironment("NEO4J_VECTOR_DIMENSIONS", "1536")
+        .WithEnvironment("KEY_VAULT_URL", "https://kv-mxinfo-bioanalyze-poc.vault.azure.net/")
+        .WithEnvironment("NEO4J_USERNAME_SECRET_NAME", "GraphDatabase--Username")
+        .WithEnvironment("NEO4J_PASSWORD_SECRET_NAME", "GraphDatabase--Password")
+        .WithEnvironment("GRAPH_QUERY_ALPHA", "0.7")
+        .WithEnvironment("DEFAULT_TOP_K", "5")
+        .WithEnvironment("MAX_QUERY_RESULTS", "10")
+        .WithEnvironment("SSL_CERT_FILE", uvCertifiCaBundle)
+        .WithEnvironment("FOUNDRY_AI_ENDPOINT", "https://aif-mxinfo-bioanalyzer-poc-eus.services.ai.azure.com/")
+        .WithEnvironment("FOUNDRY_AI_EMBEDDING_DEPLOYMENT", "text-embedding-3-small")
+        .WithEnvironment("FOUNDRY_AI_CHAT_DEPLOYMENT", "gpt-5.4-nano")
+        .WithHttpEndpoint(port: 8080, targetPort: 8080, name: "http", isProxied: false)
+        .WithEnvironment("NEO4J_URI", neo4j.GetEndpoint("bolt"))
+        .WaitFor(neo4j);
+}
 
-var embeddingApi = builder
-    .AddExecutable(
-        "embedding-api",
-        uvVenvPython,
-        "../../pipeline/embed-api",
-        "-m",
-        "uvicorn",
-        "main:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8002")
-    .WithEnvironment("REQUIRE_API_KEY", "false")
-    .WithEnvironment("AZURE_STORAGE_ACCOUNT", "bioanalyzerpoc")
-    .WithEnvironment("AZURE_STORAGE_CHUNKS_CONTAINER", "extractedtext")
-    .WithEnvironment("AZURE_STORAGE_EMBEDDING_CONTAINER", "embeddedchunks")
-    .WithEnvironment("EMBEDDING_BATCH_SIZE", "100")
-    .WithEnvironment("EMBEDDING_MAX_RETRIES", "1")
-    .WithEnvironment("MAX_CHUNKS_PER_REQUEST", "25000")
-    .WithEnvironment("SSL_CERT_FILE", uvCertifiCaBundle)
-    .WithEnvironment("FOUNDRY_AI_ENDPOINT", "https://aif-mxinfo-bioanalyzer-poc-eus.services.ai.azure.com/")
-    .WithEnvironment("FOUNDRY_AI_EMBEDDING_DEPLOYMENT", "text-embedding-3-small")
-    .WithHttpEndpoint(port: 8002, targetPort: 8002, name: "http", isProxied: false);
+if (enablePipeline)
+{
+    chunkApi = builder
+        .AddExecutable(
+            "chunk-api",
+            uvVenvPython,
+            "../../pipeline/chunk-api",
+            "-m",
+            "uvicorn",
+            "main:app",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8001")
+        .WithEnvironment("REQUIRE_API_KEY", "false")
+        .WithEnvironment("AZURE_STORAGE_ACCOUNT", "bioanalyzerpoc")
+        .WithEnvironment("AZURE_STORAGE_CHUNKS_CONTAINER", "extractedtext")
+        .WithEnvironment("SOURCE_TIMEOUT_SECONDS", "60")
+        .WithEnvironment("MAX_SOURCE_BYTES", "41943040")
+        .WithEnvironment("AZURE_STORAGE_SOURCE_CONTAINER", "literature")
+        .WithEnvironment("DEFAULT_CHUNK_SIZE", "1600")
+        .WithEnvironment("DEFAULT_CHUNK_OVERLAP", "250")
+        .WithHttpEndpoint(port: 8001, targetPort: 8001, name: "http", isProxied: false);
 
-var graphDataApi = builder
-    .AddExecutable(
-        "graph-data-api",
-        uvVenvPython,
-        "../../pipeline/graph-data-api",
-        "-m",
-        "uvicorn",
-        "main:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8080")
-    .WithEnvironment("REQUIRE_API_KEY", "false")
-    .WithEnvironment("AZURE_STORAGE_ACCOUNT", "bioanalyzerpoc")
-    .WithEnvironment("AZURE_STORAGE_EMBEDDING_CONTAINER", "embeddedchunks")
-    .WithEnvironment("NEO4J_URI", "bolt://localhost:7687")
-    .WithEnvironment("NEO4J_DATABASE", "bio")
-    .WithEnvironment("NEO4J_VECTOR_INDEX", "bio_embedding_index")
-    .WithEnvironment("NEO4J_TEXT_INDEX", "bio_text_index")
-    .WithEnvironment("NEO4J_VECTOR_DIMENSIONS", "1536")
-    .WithEnvironment("KEY_VAULT_URL", "https://kv-mxinfo-bioanalyze-poc.vault.azure.net/")
-    .WithEnvironment("NEO4J_USERNAME_SECRET_NAME", "GraphDatabase--Username")
-    .WithEnvironment("NEO4J_PASSWORD_SECRET_NAME", "GraphDatabase--Password")
-    .WithEnvironment("GRAPH_QUERY_ALPHA", "0.7")
-    .WithEnvironment("DEFAULT_TOP_K", "5")
-    .WithEnvironment("MAX_QUERY_RESULTS", "10")
-    .WithEnvironment("SSL_CERT_FILE", uvCertifiCaBundle)
-    .WithEnvironment("FOUNDRY_AI_ENDPOINT", "https://aif-mxinfo-bioanalyzer-poc-eus.services.ai.azure.com/")
-    .WithEnvironment("FOUNDRY_AI_EMBEDDING_DEPLOYMENT", "text-embedding-3-small")
-    .WithEnvironment("FOUNDRY_AI_CHAT_DEPLOYMENT", "gpt-5.4-nano")
-    .WithHttpEndpoint(port: 8080, targetPort: 8080, name: "http", isProxied: false)
-    .WithEnvironment("NEO4J_URI", neo4j.GetEndpoint("bolt"))
-    .WaitFor(neo4j);
+    embeddingApi = builder
+        .AddExecutable(
+            "embedding-api",
+            uvVenvPython,
+            "../../pipeline/embed-api",
+            "-m",
+            "uvicorn",
+            "main:app",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8002")
+        .WithEnvironment("REQUIRE_API_KEY", "false")
+        .WithEnvironment("AZURE_STORAGE_ACCOUNT", "bioanalyzerpoc")
+        .WithEnvironment("AZURE_STORAGE_CHUNKS_CONTAINER", "extractedtext")
+        .WithEnvironment("AZURE_STORAGE_EMBEDDING_CONTAINER", "embeddedchunks")
+        .WithEnvironment("EMBEDDING_BATCH_SIZE", "100")
+        .WithEnvironment("EMBEDDING_MAX_RETRIES", "1")
+        .WithEnvironment("MAX_CHUNKS_PER_REQUEST", "25000")
+        .WithEnvironment("SSL_CERT_FILE", uvCertifiCaBundle)
+        .WithEnvironment("FOUNDRY_AI_ENDPOINT", "https://aif-mxinfo-bioanalyzer-poc-eus.services.ai.azure.com/")
+        .WithEnvironment("FOUNDRY_AI_EMBEDDING_DEPLOYMENT", "text-embedding-3-small")
+        .WithHttpEndpoint(port: 8002, targetPort: 8002, name: "http", isProxied: false);
+}
 
 // Shared service credential for Research.Api (Phase B). Override via parameters/secrets in non-dev.
 var researchApiKey = builder.Configuration["ResearchApi:ApiKey"]
@@ -149,49 +172,82 @@ var researchApi = builder
    // .WithReference(db)
     .WithExternalHttpEndpoints();
 
-builder.AddProject<Projects.BioAnalyzer_App>("researchApp")
-    .WithReference(researchApi)
-    .WaitFor(researchApi)
-    .WithEnvironment("RESEARCH_API_KEY", researchApiKey)
-    .WithEnvironment("ApiAuthentication__ApiKey", researchApiKey)
-    //.WithHttpEndpoint(env: "RESEARCH_APP_PORT")
-    .WithExternalHttpEndpoints()
-    .PublishAsDockerFile();
+if (graphDataApi is not null)
+{
+    // Prefer Aspire endpoint reference over hardcoded localhost:8080 in appsettings.
+    researchApi = researchApi
+        .WithEnvironment("OpenAiConfiguration__GraphApiUrl", graphDataApi.GetEndpoint("http"))
+        .WaitFor(graphDataApi);
+}
 
+if (enableUi)
+{
+    builder.AddProject<Projects.BioAnalyzer_App>("researchApp")
+        .WithReference(researchApi)
+        .WaitFor(researchApi)
+        .WithEnvironment("RESEARCH_API_KEY", researchApiKey)
+        .WithEnvironment("ApiAuthentication__ApiKey", researchApiKey)
+        //.WithHttpEndpoint(env: "RESEARCH_APP_PORT")
+        .WithExternalHttpEndpoints()
+        .PublishAsDockerFile();
 
-// Next.js helper runs the package "dev" script (next dev) and wires PORT correctly.
-// Use WithNpm(install: false): Aspire's installer has previously rewritten node_modules/.bin
-// as plain script copies, which breaks packages that require('./…') (e.g. run-script-os).
+    // Next.js helper runs the package "dev" script (next dev) and wires PORT correctly.
+    // Use WithNpm(install: false): Aspire's installer has previously rewritten node_modules/.bin
+    // as plain script copies, which breaks packages that require('./…') (e.g. run-script-os).
 #pragma warning disable ASPIREJAVASCRIPT001 // AddNextJsApp is experimental
-builder.AddNextJsApp("react", "../../bioanalyzer-chat", "dev")
-    .WithNpm(install: false)
-    .WithReference(researchApi)
-    .WaitFor(researchApi)
-    .WithHttpEndpoint(env: "PORT", name: "http", port: 3000)
-    .WithEnvironment("NODE_OPTIONS", "--use-system-ca")
-    .WithEnvironment("RESEARCH_API_KEY", researchApiKey)
-    //.WithEnvironment("SEARCH_API_BASE_URL", searchApi.Resource.GetEndpoint("http"))
-    .WithExternalHttpEndpoints()
-    // next.config does not set output:"standalone" yet; skip publish-time validation.
-    .DisableBuildValidation()
-    .PublishAsDockerFile();
+    builder.AddNextJsApp("react", "../../bioanalyzer-chat", "dev")
+        .WithNpm(install: false)
+        .WithReference(researchApi)
+        .WaitFor(researchApi)
+        .WithHttpEndpoint(env: "PORT", name: "http", port: 3000)
+        .WithEnvironment("NODE_OPTIONS", "--use-system-ca")
+        .WithEnvironment("RESEARCH_API_KEY", researchApiKey)
+        //.WithEnvironment("SEARCH_API_BASE_URL", searchApi.Resource.GetEndpoint("http"))
+        .WithExternalHttpEndpoints()
+        // next.config does not set output:"standalone" yet; skip publish-time validation.
+        .DisableBuildValidation()
+        .PublishAsDockerFile();
 #pragma warning restore ASPIREJAVASCRIPT001
+}
 
-
-
-
-builder.AddAzureFunctionsProject<Projects.BioAnalyzer_EventHandlers>("eventHandlers")
-    .WithEnvironment("DocumentProcessing__ChunkApiUrl", chunkApi.GetEndpoint("http"))
-    .WithEnvironment("DocumentProcessing__EmbeddingApiUrl", embeddingApi.GetEndpoint("http"))
-    .WithEnvironment("DocumentProcessing__GraphDataApiUrl", graphDataApi.GetEndpoint("http"))
-    .WithEnvironment("DocumentProcessing__ResearchApiUrl", researchApi.GetEndpoint("http"))
-    .WithEnvironment("DocumentProcessing__ResearchApiKey", researchApiKey)
-    .WithEnvironment("RESEARCH_API_KEY", researchApiKey)
-    .WithEnvironment("ApiAuthentication__ApiKey", researchApiKey)
-    .WaitFor(chunkApi)
-    .WaitFor(embeddingApi)
-    .WaitFor(graphDataApi)
-    .WaitFor(researchApi)
-    .PublishAsDockerFile();
+if (enablePipeline
+    && chunkApi is not null
+    && embeddingApi is not null
+    && graphDataApi is not null)
+{
+    builder.AddAzureFunctionsProject<Projects.BioAnalyzer_EventHandlers>("eventHandlers")
+        .WithEnvironment("DocumentProcessing__ChunkApiUrl", chunkApi.GetEndpoint("http"))
+        .WithEnvironment("DocumentProcessing__EmbeddingApiUrl", embeddingApi.GetEndpoint("http"))
+        .WithEnvironment("DocumentProcessing__GraphDataApiUrl", graphDataApi.GetEndpoint("http"))
+        .WithEnvironment("DocumentProcessing__ResearchApiUrl", researchApi.GetEndpoint("http"))
+        .WithEnvironment("DocumentProcessing__ResearchApiKey", researchApiKey)
+        .WithEnvironment("RESEARCH_API_KEY", researchApiKey)
+        .WithEnvironment("ApiAuthentication__ApiKey", researchApiKey)
+        .WaitFor(chunkApi)
+        .WaitFor(embeddingApi)
+        .WaitFor(graphDataApi)
+        .WaitFor(researchApi)
+        .PublishAsDockerFile();
+}
 
 builder.Build().Run();
+
+static string NormalizeProfile(string? raw)
+{
+    var value = (raw ?? AppHostProfile.Full).Trim().ToLowerInvariant();
+    return value switch
+    {
+        AppHostProfile.Research => AppHostProfile.Research,
+        AppHostProfile.Literature => AppHostProfile.Literature,
+        AppHostProfile.Full => AppHostProfile.Full,
+        _ => throw new InvalidOperationException(
+            $"Unknown AppHost:Profile '{raw}'. Expected one of: {AppHostProfile.Full}, {AppHostProfile.Research}, {AppHostProfile.Literature}.")
+    };
+}
+
+static class AppHostProfile
+{
+    public const string Full = "full";
+    public const string Research = "research";
+    public const string Literature = "literature";
+}
